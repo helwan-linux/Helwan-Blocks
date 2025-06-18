@@ -1,3 +1,4 @@
+import os
 import pygame
 from grid import Grid
 from blocks import *
@@ -21,11 +22,29 @@ class Game:
         self.hard_drop_points = 0
         self.combo_counter = -1
 
-        self.rotate_sound = pygame.mixer.Sound("Sounds/rotate.ogg")
-        self.clear_sound = pygame.mixer.Sound("Sounds/clear.ogg")
+        # --- تحميل الأصوات بمسار ديناميكي آمن ---
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        rotate_path = os.path.join(base_path, "Sounds", "rotate.ogg")
+        clear_path = os.path.join(base_path, "Sounds", "clear.ogg")
+        music_path = os.path.join(base_path, "Sounds", "music.ogg")
 
-        pygame.mixer.music.load("Sounds/music.ogg")
-        pygame.mixer.music.play(-1)
+        try:
+            self.rotate_sound = pygame.mixer.Sound(rotate_path)
+        except pygame.error as e:
+            print(f"Warning: Could not load rotate.ogg - {e}")
+            self.rotate_sound = None
+
+        try:
+            self.clear_sound = pygame.mixer.Sound(clear_path)
+        except pygame.error as e:
+            print(f"Warning: Could not load clear.ogg - {e}")
+            self.clear_sound = None
+
+        try:
+            pygame.mixer.music.load(music_path)
+            pygame.mixer.music.play(-1)
+        except pygame.error as e:
+            print(f"Warning: Could not load or play music.ogg - {e}")
 
         self.highscore_file = "highscores.json"
         self.highscores = self.load_highscores()
@@ -192,7 +211,6 @@ class Game:
                 pygame.draw.rect(screen, Colors.helwan_grey_light, ghost_rect, 1)
 
         self.current_block.draw(screen, 11, 11)
-
         self.next_block.draw(screen, 320, 215, center_in_box=True)
 
         if self.held_block:
