@@ -1,0 +1,16 @@
+Tetris/
+├── main.py
+├── game.py
+├── grid.py
+├── blocks.py
+├── colors.py
+├── position.py
+├── highscores.json
+├── helwan-blocks.desktop
+├── Images/
+│   ├── helwan_logo.png
+│   └── (أي صور أخرى تستخدمها اللعبة)
+└── Sounds/
+    ├── rotate.ogg
+    ├── clear.ogg
+    └── (أي ملفات صوتية أخرى تستخدمها اللعبة)
