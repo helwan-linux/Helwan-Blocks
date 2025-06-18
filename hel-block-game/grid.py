@@ -7,10 +7,8 @@ class Grid:
         self.num_columns = 10
         self.cell_size = 30
         self.grid = [[0 for j in range(self.num_columns)] for i in range(self.num_rows)]
-        # --- التعديل هنا: استخدام Colors.block_colors مباشرة ---
-        self.colors = Colors.block_colors 
+        self.colors = Colors.block_colors # تم تصحيح هذا السطر
         
-        # Offset for drawing the grid on the screen
         self.offset_x = 110
         self.offset_y = 10
 
