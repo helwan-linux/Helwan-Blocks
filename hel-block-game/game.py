@@ -1,6 +1,6 @@
 import pygame
 from grid import Grid
-from blocks import * # هذا السطر هو الأهم لحل مشكلة NameError
+from blocks import * # هذا السطر مهم جداً لمشكلة NameError
 import random
 import json
 import os
