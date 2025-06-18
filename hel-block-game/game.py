@@ -1,6 +1,6 @@
 import pygame
 from grid import Grid
-from blocks import *
+from blocks import * # <--- التأكد من وجود هذا السطر بالذات (أو إضافته)
 import random
 import json
 import os
@@ -14,11 +14,11 @@ class Game:
         pygame.mixer.init()
 
         self.grid = Grid()
+        # --- هذا السطر هو اللي كان بيعمل المشكلة ---
         self.all_blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
         
-        # --- تعديل هنا: تبسيط طريقة ملء الـ blocks_bag ---
-        self.blocks_bag = list(self.all_blocks) # قائمة جديدة
-        random.shuffle(self.blocks_bag) # ترتيب عشوائي
+        self.blocks_bag = list(self.all_blocks)
+        random.shuffle(self.blocks_bag)
         
         self.current_block = self.get_next_block_from_bag()
         self.next_block = self.get_next_block_from_bag()
@@ -46,9 +46,6 @@ class Game:
         self.held_block = None
         self.can_hold = True
         
-        # لا نحتاج لـ place_new_block هنا في الـ init
-        # البلوكات بتتعين في الـ reset_position أول مرة
-
     def update_score(self, lines_cleared, move_down_points):
         if lines_cleared == 1:
             self.score += 100 * self.level
@@ -77,7 +74,7 @@ class Game:
             self.blocks_bag = list(self.all_blocks)
             random.shuffle(self.blocks_bag)
         block = self.blocks_bag.pop(0)
-        block.reset_position() # تأكد إنها بتتعاد في منتصف الشبكة
+        block.reset_position()
         return block
 
     def move_left(self):
@@ -93,7 +90,7 @@ class Game:
     def move_down(self):
         self.current_block.move(1, 0)
         if not self.block_inside() or not self.block_fits_on_grid():
-            self.current_block.move(-1, 0) # ارجع خطوة للخلف
+            self.current_block.move(-1, 0)
             self.lock_block()
 
     def hard_drop(self):
@@ -122,10 +119,9 @@ class Game:
         else:
             self.combo_counter = -1
         
-        self.current_block = self.next_block # جلب البلوك الجديد
-        self.next_block = self.get_next_block_from_bag() # جلب البلوك التالي
+        self.current_block = self.next_block
+        self.next_block = self.get_next_block_from_bag()
         
-        # --- تعديل هنا: فحص Game Over بعد وضع البلوك الجديد ---
         if not self.block_fits_on_grid():
             self.game_over = True
             self.update_highscores()
@@ -159,7 +155,6 @@ class Game:
         except pygame.error as e:
             print(f"Warning: Could not restart music - {e}")
         
-        # فحص مباشر بعد الريسيت لو البلوك الجديد مش مناسب (إعادة التأكيد)
         if not self.block_fits_on_grid():
             self.game_over = True
             self.update_highscores()
@@ -168,7 +163,6 @@ class Game:
     def block_fits_on_grid(self):
         tiles = self.current_block.get_cell_positions()
         for tile in tiles:
-            # --- تعديل هنا: التأكد من أن الكتل داخل الحدود ولا تصطدم بكتل موجودة ---
             if not self.grid.is_inside(tile.row, tile.column) or not self.grid.is_empty(tile.row, tile.column):
                 return False
         return True
@@ -222,7 +216,6 @@ class Game:
                 self.held_block = temp
             
             self.current_block.reset_position() 
-            # --- تعديل هنا: فحص الـ Game Over بعد الـ Hold لو البلوك الجديد مش مناسب ---
             if not self.block_fits_on_grid():
                  self.game_over = True
             
@@ -232,7 +225,6 @@ class Game:
         self.grid.draw(screen)
 
         if not self.game_over:
-            # --- تعديل هنا: التأكد من تمرير Grid للـ get_ghost_cell_positions ---
             ghost_tiles = self.current_block.get_ghost_cell_positions(self.grid)
             for tile in ghost_tiles:
                 ghost_rect = pygame.Rect(tile.column * self.current_block.cell_size + self.grid.offset_x + 1,
