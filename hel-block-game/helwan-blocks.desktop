@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Helwan Blocks
-Comment=A Tetris-like game with a Helwan Linux theme.
-Exec=python3 /usr/share/hel-blocks/main.py
-Icon=/usr/share/hel-blocks/Images/helwan_logo.png
-Terminal=false
-Type=Application
-Categories=Game;ArcadeGame;
