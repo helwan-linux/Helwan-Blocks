@@ -3,7 +3,6 @@ from grid import Grid
 from blocks import *
 import random
 import json
-import os
 from colors import Colors
 
 class Game:
@@ -22,14 +21,10 @@ class Game:
         self.hard_drop_points = 0
         self.combo_counter = -1
 
-        base_path = os.path.dirname(__file__)
-        rotate_path = os.path.join(base_path, "Sounds", "rotate.ogg")
-        clear_path = os.path.join(base_path, "Sounds", "clear.ogg")
-        music_path = os.path.join(base_path, "Sounds", "music.ogg")
+        self.rotate_sound = pygame.mixer.Sound("Sounds/rotate.ogg")
+        self.clear_sound = pygame.mixer.Sound("Sounds/clear.ogg")
 
-        self.rotate_sound = pygame.mixer.Sound(rotate_path)
-        self.clear_sound = pygame.mixer.Sound(clear_path)
-        pygame.mixer.music.load(music_path)
+        pygame.mixer.music.load("Sounds/music.ogg")
         pygame.mixer.music.play(-1)
 
         self.highscore_file = "highscores.json"
@@ -101,6 +96,7 @@ class Game:
         self.next_block = self.get_next_block_from_bag()
 
         rows_cleared = self.grid.clear_full_rows()
+
         if rows_cleared > 0:
             self.update_score(rows_cleared, 0)
             self.combo_counter += 1
@@ -108,6 +104,7 @@ class Game:
             self.combo_counter = -1
 
         if not self.block_fits():
+            print("Game Over: new block doesn't fit.")
             self.game_over = True
             self.update_highscores()
 
@@ -147,8 +144,7 @@ class Game:
         return True
 
     def get_drop_speed(self):
-        speed = max(50, 200 - (self.level - 1) * 10)
-        return speed
+        return max(50, 200 - (self.level - 1) * 10)
 
     def load_highscores(self):
         try:
@@ -182,7 +178,6 @@ class Game:
             self.current_block.reset_position()
             if not self.block_fits():
                 self.game_over = True
-
             self.can_hold = False
 
     def draw(self, screen):
@@ -198,11 +193,7 @@ class Game:
 
         self.current_block.draw(screen, 11, 11)
 
-        next_block_offset_x = 320
-        next_block_offset_y = 215
-        self.next_block.draw(screen, next_block_offset_x, next_block_offset_y, center_in_box=True)
+        self.next_block.draw(screen, 320, 215, center_in_box=True)
 
-        held_block_offset_x = 320
-        held_block_offset_y = 400
         if self.held_block:
-            self.held_block.draw(screen, held_block_offset_x, held_block_offset_y, center_in_box=True)
+            self.held_block.draw(screen, 320, 400, center_in_box=True)
