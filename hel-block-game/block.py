@@ -11,7 +11,6 @@ class Block:
         self.column_offset = 0
         self.rotation_state = 0
         
-        # --- التعديل هنا: إزالة الأقواس () من Colors.get_cell_colors ---
         self.colors = Colors.get_cell_colors
         
         self.is_falling = True # Add a flag to track if the block is still falling
@@ -40,40 +39,58 @@ class Block:
     def draw(self, screen, offset_x=0, offset_y=0, center_in_box=False):
         tiles = self.get_cell_positions()
         
-        # Calculate bounding box for centering
-        min_row = min(p.row for p in tiles)
-        max_row = max(p.row for p in tiles)
-        min_col = min(p.column for p in tiles)
-        max_col = max(p.column for p in tiles)
+        adjusted_offset_x = offset_x
+        adjusted_offset_y = offset_y
 
-        block_width_cells = max_col - min_col + 1
-        block_height_cells = max_row - min_row + 1
-
-        # Adjust offsets if centering is requested
         if center_in_box:
-            # Assuming a fixed box size for next/held blocks (e.g., 4 cells wide for centering)
-            box_width_cells = 5 # A bit larger to give space, or whatever fits your UI boxes
-            box_height_cells = 5 # Same here
+            # --- بداية التعديل هنا: حسابات دقيقة للمنتصف في الصندوق الجانبي ---
+            # حساب أقصى وأدنى إحداثيات للكتلة في حالتها الحالية
+            min_row = min(p.row for p in self.cells[self.rotation_state])
+            max_row = max(p.row for p in self.cells[self.rotation_state])
+            min_col = min(p.column for p in self.cells[self.rotation_state])
+            max_col = max(p.column for p in self.cells[self.rotation_state])
 
-            center_x_offset = (box_width_cells - block_width_cells) / 2 - min_col # Adjust for block's internal offset
-            center_y_offset = (box_height_cells - block_height_cells) / 2 - min_row # Adjust for block's internal offset
+            block_width_cells = max_col - min_col + 1
+            block_height_cells = max_row - min_row + 1
 
-            adjusted_offset_x = offset_x + center_x_offset * self.cell_size
-            adjusted_offset_y = offset_y + center_y_offset * self.cell_size
-        else:
-            adjusted_offset_x = offset_x
-            adjusted_offset_y = offset_y
+            # حجم الصندوق اللي بنرسم جواه القطعة (مثلاً، 4x4 خلايا عشان يستوعب أكبر قطعة وهي I)
+            # بما إن الـ cell_size = 30، يبقى الصندوق 4*30 = 120 بكسل
+            # الصناديق في main.py هي 170x120، يبقى عندنا 120 بكسل عرض لرسم القطعة
+            # بما إن الـ cell_size = 30، الـ 120 بكسل بتكفي 4 خلايا.
+            # هنجرب نخلي ابعاد الصندوق الافتراضية 4x4 خلايا لتحديد المنتصف
+            box_width_cells_for_centering = 4
+            box_height_cells_for_centering = 4
+            
+            # حساب الإزاحة المطلوبة لمنتصف الكتلة داخل صندوق بحجم 4x4 خلايا
+            # دي بتشيل الـ offset الداخلي للقطعة نفسها
+            center_x_offset_cells = (box_width_cells_for_centering - block_width_cells) / 2 - min_col
+            center_y_offset_cells = (box_height_cells_for_centering - block_height_cells) / 2 - min_row
 
+            # تحويل الإزاحة من خلايا إلى بكسل وإضافتها للـ offset الأساسي
+            adjusted_offset_x = offset_x + center_x_offset_cells * self.cell_size
+            adjusted_offset_y = offset_y + center_y_offset_cells * self.cell_size
+            # --- نهاية التعديل ---
 
-        for tile in tiles:
-            tile_rect = pygame.Rect(adjusted_offset_x + tile.column * self.cell_size, 
-                                    adjusted_offset_y + tile.row * self.cell_size, 
+        for tile_pos in self.cells[self.rotation_state]: # نستخدم self.cells مباشرة هنا
+            tile_rect = pygame.Rect(adjusted_offset_x + tile_pos.column * self.cell_size, 
+                                    adjusted_offset_y + tile_pos.row * self.cell_size, 
                                     self.cell_size -1, self.cell_size -1) # -1 for border effect
             pygame.draw.rect(screen, self.colors[self.id], tile_rect)
 
     def reset_position(self):
         self.row_offset = 0
-        self.column_offset = 0
+        self.column_offset = 3 # كانت 0، هنجرب 3 أو 4 لمنتصف الشبكة الرئيسية
+
+        # بعض القطع بتحتاج row_offset مختلف عشان تكون في أول الشبكة صح
+        if self.id == 3: # LBlock (مثلاً)
+            self.column_offset = 3
+        elif self.id == 4: # OBlock
+            self.column_offset = 4
+        elif self.id == 1: # IBlock
+             self.column_offset = 3
+        else: # باقي القطع
+             self.column_offset = 3
+        
         self.rotation_state = 0
     
     def get_ghost_cell_positions(self, grid):
@@ -84,7 +101,7 @@ class Block:
         rows_to_fall = 0
         while True:
             self.row_offset += 1
-            if not self.block_fits(grid):
+            if not grid.is_inside(current_tiles[0].row + self.row_offset, current_tiles[0].column + self.column_offset) or not self.block_fits(grid): # استخدام tile.row و tile.column في الكود الأصلي كان بيسبب مشكلة
                 self.row_offset -= 1 # Move back to the last valid position
                 break
             rows_to_fall += 1
@@ -100,6 +117,7 @@ class Block:
     def block_fits(self, grid):
         tiles = self.get_cell_positions()
         for tile in tiles:
+            # --- تعديل هنا: التأكد من أن الكتل داخل الحدود ولا تصطدم بكتل موجودة ---
             if not grid.is_inside(tile.row, tile.column) or not grid.is_empty(tile.row, tile.column):
                 return False
         return True
