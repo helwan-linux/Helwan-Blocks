@@ -33,7 +33,8 @@ game = Game()
 # الأيقونة الرئيسية للخلفية
 try:
     helwan_logo_full = pygame.image.load(os.path.join(assets_base_path, "Images", "helwan_logo.png"))
-    helwan_logo_full = pygame.transform.scale(helwan_logo_full, (200, 200))
+    # --- تعديل هنا: تصغير حجم الشعار لـ 150x150 ليتناسب بشكل أفضل ---
+    helwan_logo_full = pygame.transform.scale(helwan_logo_full, (150, 150))
 except pygame.error as e:
     print(f"Warning: Could not load full logo - {e}")
     helwan_logo_full = None
@@ -62,6 +63,7 @@ while True:
                 if event.key == pygame.K_r:
                     game.reset()
                     game_state = "playing"
+                    pygame.time.set_timer(GAME_UPDATE, game.get_drop_speed()) # إعادة ضبط التايمر
                 elif event.key == pygame.K_q:
                     pygame.quit()
                     sys.exit()
@@ -113,12 +115,7 @@ while True:
         
 
     elif game_state == "playing":
-        # --- التعديل هنا: رسم الشعار أولاً، قبل كل شيء آخر ---
-        if helwan_logo_full:
-            logo_x = 320 + (170 - helwan_logo_full.get_width()) // 2
-            logo_y = 450 + (620 - 450 - helwan_logo_full.get_height()) // 2
-            screen.blit(helwan_logo_full, (logo_x, logo_y))
-
+        
         game.draw(screen) # دي بترسم الشبكة والقطع
 
         score_board_rect = pygame.Rect(320, 50, 170, 70)
@@ -144,6 +141,14 @@ while True:
         level_value_text = level_font.render(str(game.level), True, Colors.white)
         screen.blit(level_title_text, (level_board_rect.centerx - level_title_text.get_width() / 2, level_board_rect.y + 10))
         screen.blit(level_value_text, (level_board_rect.centerx - level_value_text.get_width() / 2, level_board_rect.y + 35))
+        
+        # --- تعديل هنا: وضع الشعار في مكان مختلف لتجنب التداخل ---
+        # ممكن نخليه في أسفل الشاشة أو في المنتصف حسب الرغبة
+        # هنا هخليه تحت صندوق الـ Level
+        if helwan_logo_full:
+            logo_x = 320 + (170 - helwan_logo_full.get_width()) // 2
+            logo_y = level_board_rect.y + level_board_rect.height + 10 # 10 بكسل تحت صندوق الليفل
+            screen.blit(helwan_logo_full, (logo_x, logo_y))
 
 
     pygame.display.update()
