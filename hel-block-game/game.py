@@ -16,9 +16,10 @@ class Game:
         self.grid = Grid()
         self.all_blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
         
-        # --- تعديل هنا: التأكد من أن list(self.all_blocks) تُنشئ قائمة جديدة في كل مرة ---
-        # ده بيضمن ان كيس البلوكات يتجدد دايماً
-        self.blocks_bag = random.sample(self.all_blocks, k=len(self.all_blocks)) # random.sample لضمان عدم تكرار العناصر
+        # --- تعديل هنا: تبسيط طريقة ملء الـ blocks_bag ---
+        self.blocks_bag = list(self.all_blocks) # قائمة جديدة
+        random.shuffle(self.blocks_bag) # ترتيب عشوائي
+        
         self.current_block = self.get_next_block_from_bag()
         self.next_block = self.get_next_block_from_bag()
 
@@ -44,71 +45,58 @@ class Game:
 
         self.held_block = None
         self.can_hold = True
-        self.place_new_block() # استدعاء دالة لوضع البلوك الأولي
-
-    def place_new_block(self):
-        self.current_block = self.next_block
-        self.next_block = self.get_next_block_from_bag()
-        # --- تعديل هنا: فحص Game Over بعد وضع البلوك الجديد ---
-        if not self.block_fits_on_grid():
-            self.game_over = True
-            self.update_highscores()
-            if pygame.mixer.music.get_busy():
-                pygame.mixer.music.stop()
+        
+        # لا نحتاج لـ place_new_block هنا في الـ init
+        # البلوكات بتتعين في الـ reset_position أول مرة
 
     def update_score(self, lines_cleared, move_down_points):
-        # النقاط الأساسية لكل سطر
         if lines_cleared == 1:
             self.score += 100 * self.level
         elif lines_cleared == 2:
             self.score += 300 * self.level
         elif lines_cleared == 3:
             self.score += 500 * self.level
-        elif lines_cleared == 4: # Tetris
+        elif lines_cleared == 4:
             self.score += 800 * self.level
         
-        # نقاط السقوط اليدوي
         self.score += move_down_points
         
-        # نقاط الكومبو
         if lines_cleared > 0 and self.combo_counter > 0:
             combo_bonus = self.combo_counter * 50 * self.level
             self.score += combo_bonus
         
-        # نقاط الهارد دروب
         self.score += self.hard_drop_points
-        self.hard_drop_points = 0 # إعادة تعيين نقاط الهارد دروب بعد إضافتها
+        self.hard_drop_points = 0
 
         self.lines_cleared_total += lines_cleared
-        if self.lines_cleared_total >= self.level * 10: # كل 10 سطور بيزيد الليفل
+        if self.lines_cleared_total >= self.level * 10:
             self.level += 1
-            # سرعة السقوط بتتحدث في main.py بناءً على level
 
     def get_next_block_from_bag(self):
         if len(self.blocks_bag) == 0:
-            self.blocks_bag = random.sample(self.all_blocks, k=len(self.all_blocks)) # تجديد الكيس
+            self.blocks_bag = list(self.all_blocks)
+            random.shuffle(self.blocks_bag)
         block = self.blocks_bag.pop(0)
-        block.reset_position()
+        block.reset_position() # تأكد إنها بتتعاد في منتصف الشبكة
         return block
 
     def move_left(self):
         self.current_block.move(0, -1)
-        if self.block_inside() == False or self.block_fits_on_grid() == False:
+        if not self.block_inside() or not self.block_fits_on_grid():
             self.current_block.move(0, 1)
 
     def move_right(self):
         self.current_block.move(0, 1)
-        if self.block_inside() == False or self.block_fits_on_grid() == False:
+        if not self.block_inside() or not self.block_fits_on_grid():
             self.current_block.move(0, -1)
 
     def move_down(self):
         self.current_block.move(1, 0)
-        if self.block_inside() == False or self.block_fits_on_grid() == False:
-            self.current_block.move(-1, 0) # ارجع خطوة
+        if not self.block_inside() or not self.block_fits_on_grid():
+            self.current_block.move(-1, 0) # ارجع خطوة للخلف
             self.lock_block()
 
     def hard_drop(self):
-        # حساب النقاط قبل القفل عشان تكون دقيقة
         rows_dropped = 0
         while True:
             self.current_block.move(1, 0)
@@ -116,7 +104,7 @@ class Game:
                 self.current_block.move(-1, 0)
                 break
             rows_dropped += 1
-        self.hard_drop_points = rows_dropped * 2 # نقطتين لكل صف سقط
+        self.hard_drop_points = rows_dropped * 2
         self.lock_block()
 
     def lock_block(self):
@@ -134,13 +122,23 @@ class Game:
         else:
             self.combo_counter = -1
         
-        self.place_new_block() # هنا بنحط البلوك الجديد وبنفحص الـ Game Over
+        self.current_block = self.next_block # جلب البلوك الجديد
+        self.next_block = self.get_next_block_from_bag() # جلب البلوك التالي
+        
+        # --- تعديل هنا: فحص Game Over بعد وضع البلوك الجديد ---
+        if not self.block_fits_on_grid():
+            self.game_over = True
+            self.update_highscores()
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
+        
         self.can_hold = True
 
     def reset(self):
         self.grid.reset()
         self.all_blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
-        self.blocks_bag = random.sample(self.all_blocks, k=len(self.all_blocks)) # تجديد الكيس
+        self.blocks_bag = list(self.all_blocks)
+        random.shuffle(self.blocks_bag)
         self.current_block = self.get_next_block_from_bag()
         self.next_block = self.get_next_block_from_bag()
         
@@ -150,8 +148,8 @@ class Game:
         self.combo_counter = -1
         self.held_block = None
         self.can_hold = True
-        self.hard_drop_points = 0 # reset hard drop points
-        self.game_over = False # إعادة تعيين حالة اللعبة
+        self.hard_drop_points = 0
+        self.game_over = False
 
         if pygame.mixer.music.get_busy():
             pygame.mixer.music.stop()
@@ -161,7 +159,7 @@ class Game:
         except pygame.error as e:
             print(f"Warning: Could not restart music - {e}")
         
-        # فحص مباشر بعد الريسيت لو البلوك الجديد مش مناسب
+        # فحص مباشر بعد الريسيت لو البلوك الجديد مش مناسب (إعادة التأكيد)
         if not self.block_fits_on_grid():
             self.game_over = True
             self.update_highscores()
@@ -177,7 +175,7 @@ class Game:
 
     def rotate(self):
         self.current_block.rotate()
-        if self.block_inside() == False or self.block_fits_on_grid() == False:
+        if not self.block_inside() or not self.block_fits_on_grid():
             self.current_block.undo_rotation()
         else:
             if self.rotate_sound:
@@ -186,14 +184,12 @@ class Game:
     def block_inside(self):
         tiles = self.current_block.get_cell_positions()
         for tile in tiles:
-            if self.grid.is_inside(tile.row, tile.column) == False:
+            if not self.grid.is_inside(tile.row, tile.column):
                 return False
         return True
 
     def get_drop_speed(self):
-        # سرعة السقوط تعتمد على المستوى، كل ما زاد المستوى السرعة بتزيد
-        # القيم دي ممكن تحتاج تظبيط
-        speed = max(50, 800 - (self.level - 1) * 60) # كانت 200 - (self.level - 1) * 10
+        speed = max(50, 800 - (self.level - 1) * 60)
         return speed
 
     def load_highscores(self):
@@ -236,6 +232,7 @@ class Game:
         self.grid.draw(screen)
 
         if not self.game_over:
+            # --- تعديل هنا: التأكد من تمرير Grid للـ get_ghost_cell_positions ---
             ghost_tiles = self.current_block.get_ghost_cell_positions(self.grid)
             for tile in ghost_tiles:
                 ghost_rect = pygame.Rect(tile.column * self.current_block.cell_size + self.grid.offset_x + 1,
