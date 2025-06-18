@@ -3,6 +3,7 @@ from grid import Grid
 from blocks import *
 import random
 import json
+import os
 from colors import Colors
 
 class Game:
@@ -21,13 +22,14 @@ class Game:
         self.hard_drop_points = 0
         self.combo_counter = -1
 
-        self.rotate_sound = pygame.mixer.Sound("Sounds/rotate.ogg")
-        self.clear_sound = pygame.mixer.Sound("Sounds/clear.ogg")
-
-        pygame.mixer.music.load("Sounds/music.ogg")
+        # تعديل المسارات لتكون نسبية
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        self.rotate_sound = pygame.mixer.Sound(os.path.join(base_path, "Sounds", "rotate.ogg"))
+        self.clear_sound = pygame.mixer.Sound(os.path.join(base_path, "Sounds", "clear.ogg"))
+        pygame.mixer.music.load(os.path.join(base_path, "Sounds", "music.ogg"))
         pygame.mixer.music.play(-1)
 
-        self.highscore_file = "highscores.json"
+        self.highscore_file = os.path.join(base_path, "highscores.json")
         self.highscores = self.load_highscores()
 
         self.held_block = None
@@ -123,6 +125,7 @@ class Game:
         self.combo_counter = -1
         self.held_block = None
         self.can_hold = True
+        self.game_over = False
 
     def block_fits(self):
         tiles = self.current_block.get_cell_positions()
@@ -139,8 +142,6 @@ class Game:
     def block_inside(self):
         tiles = self.current_block.get_cell_positions()
         for tile in tiles:
-            if tile.row < 0:
-                return False
             if not self.grid.is_inside(tile.row, tile.column):
                 return False
         return True
