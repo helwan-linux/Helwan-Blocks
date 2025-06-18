@@ -158,6 +158,8 @@ class Game:
     def block_inside(self):
         tiles = self.current_block.get_cell_positions()
         for tile in tiles:
+            if tile.row < 0:
+                return False
             if not self.grid.is_inside(tile.row, tile.column):
                 return False
         return True
