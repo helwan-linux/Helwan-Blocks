@@ -4,25 +4,21 @@ import os
 from game import Game
 from colors import Colors
 
-# --- بداية التعديل: تحديد المسار الأساسي للمشروع ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 assets_base_path = current_dir
-# --- نهاية التعديل ---
 
 pygame.init()
 pygame.display.set_caption("Helwan Blocks")
 
-# استخدام os.path.join لتحديد مسار الأيقونة والشعار
 try:
     window_icon = pygame.image.load(os.path.join(assets_base_path, "Images", "helwan_logo.png"))
     pygame.display.set_icon(window_icon)
 except pygame.error as e:
     print(f"Warning: Could not load window icon - {e}")
 
-# الألوان
 dark_grey = (44, 44, 44)
 green = (173, 204, 114)
-light_blue = (59, 85, 162) # لون جديد للواجهة الخلفية
+light_blue = (59, 85, 162)
 
 screen_width = 500
 screen_height = 620
@@ -30,28 +26,24 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 
 game = Game()
 
-# الأيقونة الرئيسية للخلفية
 try:
     helwan_logo_full = pygame.image.load(os.path.join(assets_base_path, "Images", "helwan_logo.png"))
-    # تعديل هنا: تصغير حجم الشعار لـ 150x150 ليتناسب بشكل أفضل
     helwan_logo_full = pygame.transform.scale(helwan_logo_full, (150, 150))
 except pygame.error as e:
     print(f"Warning: Could not load full logo - {e}")
     helwan_logo_full = None
 
-# الخطوط
 score_font = pygame.font.Font(None, 36)
 title_font = pygame.font.Font(None, 48)
 level_font = pygame.font.Font(None, 28)
 game_over_font = pygame.font.Font(None, 60)
 highscore_font = pygame.font.Font(None, 24)
+menu_font = pygame.font.Font(None, 40)
 
-# حدث تدوير الكتلة تلقائياً
 GAME_UPDATE = pygame.USEREVENT
 pygame.time.set_timer(GAME_UPDATE, game.get_drop_speed())
 
-# --- تعديل هنا: العودة للحالة الأساسية (اللعبة تبدأ مباشرة) ---
-game_state = "playing" # اللعبة هتبدأ على طول
+game_state = "start_screen" # Start with the start screen
 
 while True:
     for event in pygame.event.get():
@@ -60,7 +52,20 @@ while True:
             sys.exit()
 
         if event.type == pygame.KEYDOWN:
-            if game.game_over == True:
+            if game_state == "start_screen":
+                if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
+                    game_state = "playing"
+                    game.reset()
+                    pygame.time.set_timer(GAME_UPDATE, game.get_drop_speed())
+                elif event.key == pygame.K_i:
+                    game_state = "instructions_screen"
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    sys.exit()
+            elif game_state == "instructions_screen":
+                if event.key == pygame.K_ESCAPE or event.key == pygame.K_BACKSPACE:
+                    game_state = "start_screen"
+            elif game.game_over == True:
                 if event.key == pygame.K_r:
                     game.reset()
                     game_state = "playing"
@@ -87,13 +92,63 @@ while True:
             game.move_down()
             pygame.time.set_timer(GAME_UPDATE, game.get_drop_speed())
 
-
     screen.fill(light_blue)
 
-    # --- تم حذف منطق شاشة البداية والإرشادات هنا ---
-    # وسيتم إعادتهما لاحقاً بعد حل المشاكل الأساسية
+    if game_state == "start_screen":
+        if helwan_logo_full:
+            logo_x = screen_width // 2 - helwan_logo_full.get_width() // 2
+            logo_y = screen_height // 2 - helwan_logo_full.get_height() // 2 - 100
+            screen.blit(helwan_logo_full, (logo_x, logo_y))
 
-    if game.game_over == True:
+        game_title_text = title_font.render("Helwan Blocks", True, Colors.white)
+        game_title_rect = game_title_text.get_rect(center=(screen_width // 2, logo_y + helwan_logo_full.get_height() + 10))
+        screen.blit(game_title_text, game_title_rect)
+
+        play_text = menu_font.render("Press SPACE to Play", True, Colors.white)
+        play_rect = play_text.get_rect(center=(screen_width // 2, screen_height // 2 + 50))
+        screen.blit(play_text, play_rect)
+
+        instructions_text = menu_font.render("Press I for Instructions", True, Colors.white)
+        instructions_rect = instructions_text.get_rect(center=(screen_width // 2, screen_height // 2 + 100))
+        screen.blit(instructions_text, instructions_rect)
+
+        high_score_title = score_font.render("High Score", True, Colors.yellow)
+        high_score_value = score_font.render(str(game.highscores[0]) if game.highscores else "0", True, Colors.white)
+        
+        high_score_title_rect = high_score_title.get_rect(center=(screen_width // 2, screen_height // 2 + 180))
+        high_score_value_rect = high_score_value.get_rect(center=(screen_width // 2, screen_height // 2 + 210))
+
+        screen.blit(high_score_title, high_score_title_rect)
+        screen.blit(high_score_value, high_score_value_rect)
+
+        quit_text_menu = score_font.render("Press Q to Quit", True, Colors.white)
+        quit_rect_menu = quit_text_menu.get_rect(center=(screen_width // 2, screen_height - 30))
+        screen.blit(quit_text_menu, quit_rect_menu)
+
+    elif game_state == "instructions_screen":
+        instructions_title = title_font.render("Instructions", True, Colors.white)
+        instructions_title_rect = instructions_title.get_rect(center=(screen_width // 2, 50))
+        screen.blit(instructions_title, instructions_title_rect)
+
+        instruction_lines = [
+            "Use Left/Right Arrows to Move Block",
+            "Use Down Arrow for Soft Drop",
+            "Use Up Arrow to Rotate Block",
+            "Use SPACE for Hard Drop",
+            "Use C to Hold/Swap Block",
+            "Clear full rows to score points",
+            "Get a Game Over when blocks stack to the top",
+            "Press ESC or BACKSPACE to go back"
+        ]
+        
+        y_offset_inst = 120
+        for line in instruction_lines:
+            line_text = score_font.render(line, True, Colors.white)
+            line_rect = line_text.get_rect(center=(screen_width // 2, y_offset_inst))
+            screen.blit(line_text, line_rect)
+            y_offset_inst += 40
+
+    elif game.game_over == True:
         game_over_text = game_over_font.render("GAME OVER", True, Colors.red)
         score_final_text = score_font.render(f"Final Score: {game.score}", True, Colors.white)
         restart_text = score_font.render("Press 'R' to Restart", True, Colors.white)
@@ -146,11 +201,9 @@ while True:
         screen.blit(level_title_text, (level_board_rect.centerx - level_title_text.get_width() / 2, level_board_rect.y + 10))
         screen.blit(level_value_text, (level_board_rect.centerx - level_value_text.get_width() / 2, level_board_rect.y + 35))
         
-        # وضع الشعار في مكان مختلف لتجنب التداخل
         if helwan_logo_full:
             logo_x = 320 + (170 - helwan_logo_full.get_width()) // 2
             logo_y = level_board_rect.y + level_board_rect.height + 10
             screen.blit(helwan_logo_full, (logo_x, logo_y))
-
 
     pygame.display.update()
