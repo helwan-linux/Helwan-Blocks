@@ -104,52 +104,46 @@ while True:
         screen.blit(quit_text, quit_rect)
 
         highscore_title = score_font.render("TOP SCORES", True, Colors.yellow)
-        # --- التعديل هنا: إضافة الأقواس لـ blit ---
-        screen.blit(highscore_title, (screen_width // 2 - highscore_title.get_width() // 2, screen_height // 2 + 120))
+        screen.blit(highscore_title, (screen_width // 2 - highscore_title.get_width() / 2, screen_height // 2 + 120))
         
         y_offset = 150
         for i, score_val in enumerate(game.highscores):
             score_line = highscore_font.render(f"{i+1}. {score_val}", True, Colors.white)
-            # --- التعديل هنا: إضافة الأقواس لـ blit ---
-            screen.blit(score_line, (screen_width // 2 - score_line.get_width() // 2, screen_height // 2 + y_offset + (i * 25)))
+            screen.blit(score_line, (screen_width // 2 - score_line.get_width() / 2, screen_height // 2 + y_offset + (i * 25)))
         
 
     elif game_state == "playing":
-        game.draw(screen)
+        # --- التعديل هنا: رسم الشعار أولاً، قبل كل شيء آخر ---
+        if helwan_logo_full:
+            logo_x = 320 + (170 - helwan_logo_full.get_width()) // 2
+            logo_y = 450 + (620 - 450 - helwan_logo_full.get_height()) // 2
+            screen.blit(helwan_logo_full, (logo_x, logo_y))
+
+        game.draw(screen) # دي بترسم الشبكة والقطع
 
         score_board_rect = pygame.Rect(320, 50, 170, 70)
         pygame.draw.rect(screen, Colors.light_blue_helwan, score_board_rect, 0, 10)
         score_title_text = score_font.render("Score", True, Colors.white)
         score_value_text = score_font.render(str(game.score), True, Colors.white)
-        # --- التعديل هنا: إضافة الأقواس لـ blit (السطر 140 في الكود القديم) ---
         screen.blit(score_title_text, (score_board_rect.centerx - score_title_text.get_width() / 2, score_board_rect.y + 10))
         screen.blit(score_value_text, (score_board_rect.centerx - score_value_text.get_width() / 2, score_board_rect.y + 35))
 
         next_block_board_rect = pygame.Rect(320, 150, 170, 120)
         pygame.draw.rect(screen, Colors.light_blue_helwan, next_block_board_rect, 0, 10)
         next_title_text = score_font.render("Next", True, Colors.white)
-        # --- التعديل هنا: إضافة الأقواس لـ blit ---
         screen.blit(next_title_text, (next_block_board_rect.centerx - next_title_text.get_width() / 2, next_block_board_rect.y + 10))
 
         held_block_board_rect = pygame.Rect(320, 330, 170, 120)
         pygame.draw.rect(screen, Colors.light_blue_helwan, held_block_board_rect, 0, 10)
         held_title_text = score_font.render("Hold", True, Colors.white)
-        # --- التعديل هنا: إضافة الأقواس لـ blit ---
         screen.blit(held_title_text, (held_block_board_rect.centerx - held_title_text.get_width() / 2, held_block_board_rect.y + 10))
 
         level_board_rect = pygame.Rect(320, 510, 170, 70)
         pygame.draw.rect(screen, Colors.light_blue_helwan, level_board_rect, 0, 10)
         level_title_text = level_font.render("Level", True, Colors.white)
         level_value_text = level_font.render(str(game.level), True, Colors.white)
-        # --- التعديل هنا: إضافة الأقواس لـ blit ---
         screen.blit(level_title_text, (level_board_rect.centerx - level_title_text.get_width() / 2, level_board_rect.y + 10))
         screen.blit(level_value_text, (level_board_rect.centerx - level_value_text.get_width() / 2, level_board_rect.y + 35))
-
-        if helwan_logo_full:
-            logo_x = 320 + (170 - helwan_logo_full.get_width()) // 2
-            logo_y = 450 + (620 - 450 - helwan_logo_full.get_height()) // 2
-            # --- التعديل هنا: إضافة الأقواس لـ blit ---
-            screen.blit(helwan_logo_full, (logo_x, logo_y))
 
 
     pygame.display.update()
