@@ -26,7 +26,9 @@ class Game:
         rotate_sound_path = os.path.join(base_path, "Sounds", "rotate.ogg")
         clear_sound_path = os.path.join(base_path, "Sounds", "clear.ogg")
         music_path = os.path.join(base_path, "Sounds", "music.ogg")
-        highscore_path = os.path.join(base_path, "highscores.json")
+
+        # استخدم مجلد المستخدم لتخزين ملف السكور لتجنب مشاكل الصلاحيات
+        highscore_path = os.path.join(os.path.expanduser("~"), ".helwan_highscores.json")
 
         self.rotate_sound = pygame.mixer.Sound(rotate_sound_path)
         self.clear_sound = pygame.mixer.Sound(clear_sound_path)
