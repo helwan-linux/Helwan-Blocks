@@ -1,3 +1,4 @@
+import os
 import pygame,sys
 from game import Game
 from colors import Colors
