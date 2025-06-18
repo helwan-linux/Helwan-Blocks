@@ -3,7 +3,6 @@ from grid import Grid
 from blocks import *
 import random
 import json
-import os
 from colors import Colors
 
 class Game:
@@ -22,14 +21,13 @@ class Game:
         self.hard_drop_points = 0
         self.combo_counter = -1
 
-        # تعديل المسارات لتكون نسبية
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        self.rotate_sound = pygame.mixer.Sound(os.path.join(base_path, "Sounds", "rotate.ogg"))
-        self.clear_sound = pygame.mixer.Sound(os.path.join(base_path, "Sounds", "clear.ogg"))
-        pygame.mixer.music.load(os.path.join(base_path, "Sounds", "music.ogg"))
+        self.rotate_sound = pygame.mixer.Sound("Sounds/rotate.ogg")
+        self.clear_sound = pygame.mixer.Sound("Sounds/clear.ogg")
+
+        pygame.mixer.music.load("Sounds/music.ogg")
         pygame.mixer.music.play(-1)
 
-        self.highscore_file = os.path.join(base_path, "highscores.json")
+        self.highscore_file = "highscores.json"
         self.highscores = self.load_highscores()
 
         self.held_block = None
@@ -94,7 +92,17 @@ class Game:
         tiles = self.current_block.get_cell_positions()
         for position in tiles:
             self.grid.grid[position.row][position.column] = self.current_block.id
+
         self.current_block = self.next_block
+        self.current_block.reset_position()
+
+        # تحقق من ملاءمة الكتلة الجديدة قبل الاستمرار
+        if not self.block_fits():
+            print("Game Over: new block doesn't fit.")
+            self.game_over = True
+            self.update_highscores()
+            return
+
         self.next_block = self.get_next_block_from_bag()
 
         rows_cleared = self.grid.clear_full_rows()
@@ -104,11 +112,6 @@ class Game:
             self.combo_counter += 1
         else:
             self.combo_counter = -1
-
-        if not self.block_fits():
-            print("Game Over: new block doesn't fit.")
-            self.game_over = True
-            self.update_highscores()
 
         self.can_hold = True
 
@@ -125,7 +128,6 @@ class Game:
         self.combo_counter = -1
         self.held_block = None
         self.can_hold = True
-        self.game_over = False
 
     def block_fits(self):
         tiles = self.current_block.get_cell_positions()
@@ -195,7 +197,6 @@ class Game:
                 pygame.draw.rect(screen, Colors.helwan_grey_light, ghost_rect, 1)
 
         self.current_block.draw(screen, 11, 11)
-
         self.next_block.draw(screen, 320, 215, center_in_box=True)
 
         if self.held_block:
