@@ -13,8 +13,8 @@ class Grid:
         self.current_animation_frame = 0
 
         # Offset للشبكة عشان تكون في منتصف الشاشة تقريباً
-        self.offset_x = 11 # القيمة دي ممكن تحتاج تظبيط بسيط عشان تكون في المنتصف
-        self.offset_y = 11 # القيمة دي ممكن تحتاج تظبيط بسيط عشان تكون في المنتصف
+        self.offset_x = 11
+        self.offset_y = 11
 
 
     def print_grid(self):
@@ -33,7 +33,8 @@ class Grid:
             return True
         return False
 
-    def def clear_full_rows(self): # <--- فيه غلطة هنا
+    # --- التعديل هنا: تم حذف كلمة 'def' الزائدة ---
+    def clear_full_rows(self):
         cleared = 0
         self.cleared_rows = []
         for row in range(self.num_rows -1, 0, -1):
@@ -67,7 +68,6 @@ class Grid:
         for row in range(self.num_rows):
             for column in range(self.num_cols):
                 cell_value = self.grid[row][column]
-                # --- التعديل هنا: استخدام offset_x و offset_y لضبط مكان الرسم ---
                 cell_rect = pygame.Rect(column * self.cell_size + self.offset_x,
                                         row * self.cell_size + self.offset_y,
                                         self.cell_size -1, self.cell_size -1)
@@ -75,16 +75,15 @@ class Grid:
         
         # رسم الحدود الخارجية للشبكة
         border_rect = pygame.Rect(self.offset_x - 1, self.offset_y - 1,
-                                  self.num_cols * self.cell_size + 2, # +2 للحدود
-                                  self.num_rows * self.cell_size + 2) # +2 للحدود
-        pygame.draw.rect(screen, Colors.black, border_rect, 2) # رسم حدود سوداء سمكها 2 بكسل
+                                  self.num_cols * self.cell_size + 2,
+                                  self.num_rows * self.cell_size + 2)
+        pygame.draw.rect(screen, Colors.black, border_rect, 2)
 
         if self.cleared_rows:
             self.current_animation_frame += 1
             if self.current_animation_frame < self.clear_animation_frames:
                 for r_index in self.cleared_rows:
                     animation_color = (255, 255, 255)
-                    # --- التعديل هنا: استخدام offset_x و offset_y للحركة ---
                     animation_rect = pygame.Rect(self.offset_x, r_index * self.cell_size + self.offset_y,
                                                 self.num_cols * self.cell_size, self.cell_size)
                     pygame.draw.rect(screen, animation_color, animation_rect)
