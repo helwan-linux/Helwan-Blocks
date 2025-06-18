@@ -7,11 +7,12 @@ class Grid:
         self.num_columns = 10
         self.cell_size = 30
         self.grid = [[0 for j in range(self.num_columns)] for i in range(self.num_rows)]
-        self.colors = Colors.get_cell_colors()
+        # --- التعديل هنا: استخدام Colors.block_colors مباشرة ---
+        self.colors = Colors.block_colors 
         
         # Offset for drawing the grid on the screen
-        self.offset_x = 110 # كانت 20
-        self.offset_y = 10 # كانت 20
+        self.offset_x = 110
+        self.offset_y = 10
 
     def print_grid(self):
         for row in range(self.num_rows):
@@ -25,7 +26,7 @@ class Grid:
                 cell_value = self.grid[row][column]
                 cell_rect = pygame.Rect(self.offset_x + column * self.cell_size, 
                                         self.offset_y + row * self.cell_size, 
-                                        self.cell_size -1, self.cell_size -1) # -1 for border effect
+                                        self.cell_size -1, self.cell_size -1)
                 pygame.draw.rect(screen, self.colors[cell_value], cell_rect)
     
     def is_inside(self, row, column):
@@ -41,15 +42,14 @@ class Grid:
     def clear_full_rows(self):
         cleared_rows = 0
         rows_to_clear = []
-        for row in range(self.num_rows -1, 0, -1): # ابدأ من الأسفل
+        for row in range(self.num_rows -1, 0, -1):
             if self.is_row_full(row):
                 rows_to_clear.append(row)
         
-        # قم بإزالة الصفوف الممتلئة وحرك الصفوف العلوية للأسفل
         for row_to_clear in sorted(rows_to_clear, reverse=True):
             for r in range(row_to_clear, 0, -1):
-                self.grid[r] = self.grid[r-1][:] # نسخ الصف العلوي
-            self.grid[0] = [0 for _ in range(self.num_columns)] # إفراغ الصف العلوي
+                self.grid[r] = self.grid[r-1][:]
+            self.grid[0] = [0 for _ in range(self.num_columns)]
 
         cleared_rows = len(rows_to_clear)
         return cleared_rows
