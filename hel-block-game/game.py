@@ -1,6 +1,6 @@
 import pygame
 from grid import Grid
-from blocks import * # <--- التأكد من وجود هذا السطر بالذات (أو إضافته)
+from blocks import * # هذا السطر هو الأهم لحل مشكلة NameError
 import random
 import json
 import os
@@ -14,7 +14,6 @@ class Game:
         pygame.mixer.init()
 
         self.grid = Grid()
-        # --- هذا السطر هو اللي كان بيعمل المشكلة ---
         self.all_blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
         
         self.blocks_bag = list(self.all_blocks)
