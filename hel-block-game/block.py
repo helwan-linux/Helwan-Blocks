@@ -11,7 +11,7 @@ class Block:
         self.column_offset = 0
         self.rotation_state = 0
         
-        self.colors = Colors.get_cell_colors
+        self.colors = Colors.block_colors # تم تصحيح هذا السطر
         
         self.is_falling = True
 
