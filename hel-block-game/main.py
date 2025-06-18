@@ -12,7 +12,7 @@ assets_base_path = current_dir
 pygame.init()
 pygame.display.set_caption("Helwan Blocks")
 
-# --- التعديل هنا: استخدام os.path.join لتحديد مسار الأيقونة والشعار ---
+# استخدام os.path.join لتحديد مسار الأيقونة والشعار
 try:
     window_icon = pygame.image.load(os.path.join(assets_base_path, "Images", "helwan_logo.png"))
     pygame.display.set_icon(window_icon)
@@ -33,7 +33,7 @@ game = Game()
 # الأيقونة الرئيسية للخلفية
 try:
     helwan_logo_full = pygame.image.load(os.path.join(assets_base_path, "Images", "helwan_logo.png"))
-    # --- تعديل هنا: تصغير حجم الشعار لـ 150x150 ليتناسب بشكل أفضل ---
+    # تعديل هنا: تصغير حجم الشعار لـ 150x150 ليتناسب بشكل أفضل
     helwan_logo_full = pygame.transform.scale(helwan_logo_full, (150, 150))
 except pygame.error as e:
     print(f"Warning: Could not load full logo - {e}")
@@ -45,12 +45,15 @@ title_font = pygame.font.Font(None, 48)
 level_font = pygame.font.Font(None, 28)
 game_over_font = pygame.font.Font(None, 60)
 highscore_font = pygame.font.Font(None, 24)
+# خط جديد لشاشة البداية
+menu_font = pygame.font.Font(None, 50)
 
 # حدث تدوير الكتلة تلقائياً
 GAME_UPDATE = pygame.USEREVENT
 pygame.time.set_timer(GAME_UPDATE, game.get_drop_speed())
 
-game_state = "playing"
+# --- إضافة حالة جديدة للعبة: "start_screen" ---
+game_state = "start_screen" # اللعبة هتبدأ بشاشة البداية
 
 while True:
     for event in pygame.event.get():
@@ -59,7 +62,14 @@ while True:
             sys.exit()
 
         if event.type == pygame.KEYDOWN:
-            if game.game_over == True:
+            if game_state == "start_screen":
+                if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN: # Space or Enter to Play
+                    game_state = "playing"
+                    game.reset() # إعادة ضبط اللعبة لما تبدأ من شاشة البداية
+                elif event.key == pygame.K_q: # Q to Quit
+                    pygame.quit()
+                    sys.exit()
+            elif game.game_over == True:
                 if event.key == pygame.K_r:
                     game.reset()
                     game_state = "playing"
@@ -86,10 +96,27 @@ while True:
             game.move_down()
             pygame.time.set_timer(GAME_UPDATE, game.get_drop_speed())
 
-
     screen.fill(light_blue)
 
-    if game.game_over == True:
+    # --- إضافة منطق شاشة البداية هنا ---
+    if game_state == "start_screen":
+        # رسم الشعار في المنتصف
+        if helwan_logo_full:
+            logo_x = screen_width // 2 - helwan_logo_full.get_width() // 2
+            logo_y = screen_height // 2 - helwan_logo_full.get_height() // 2 - 50 # أعلى الشاشة قليلا
+            screen.blit(helwan_logo_full, (logo_x, logo_y))
+
+        # زر Play
+        play_text = menu_font.render("Press SPACE to Play", True, Colors.white)
+        play_rect = play_text.get_rect(center=(screen_width // 2, screen_height // 2 + 80))
+        screen.blit(play_text, play_rect)
+
+        # زر Quit
+        quit_text_menu = score_font.render("Press Q to Quit", True, Colors.white)
+        quit_rect_menu = quit_text_menu.get_rect(center=(screen_width // 2, screen_height // 2 + 130))
+        screen.blit(quit_text_menu, quit_rect_menu)
+
+    elif game.game_over == True:
         game_over_text = game_over_font.render("GAME OVER", True, Colors.red)
         score_final_text = score_font.render(f"Final Score: {game.score}", True, Colors.white)
         restart_text = score_font.render("Press 'R' to Restart", True, Colors.white)
@@ -142,9 +169,7 @@ while True:
         screen.blit(level_title_text, (level_board_rect.centerx - level_title_text.get_width() / 2, level_board_rect.y + 10))
         screen.blit(level_value_text, (level_board_rect.centerx - level_value_text.get_width() / 2, level_board_rect.y + 35))
         
-        # --- تعديل هنا: وضع الشعار في مكان مختلف لتجنب التداخل ---
-        # ممكن نخليه في أسفل الشاشة أو في المنتصف حسب الرغبة
-        # هنا هخليه تحت صندوق الـ Level
+        # وضع الشعار في مكان مختلف لتجنب التداخل
         if helwan_logo_full:
             logo_x = 320 + (170 - helwan_logo_full.get_width()) // 2
             logo_y = level_board_rect.y + level_board_rect.height + 10 # 10 بكسل تحت صندوق الليفل
