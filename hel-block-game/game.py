@@ -3,18 +3,15 @@ from grid import Grid
 from blocks import *
 import random
 import json
-import os # <--- إضافة مهمة: استيراد مكتبة os
+import os
 from colors import Colors
 
-# --- بداية التعديل: تحديد المسار الأساسي للمشروع لملف game.py ---
-# ده بيجيب المسار المطلق للمجلد اللي فيه ملف game.py
 current_game_dir = os.path.dirname(os.path.abspath(__file__))
 game_assets_base_path = current_game_dir
-# --- نهاية التعديل ---
 
 class Game:
     def __init__(self):
-        pygame.mixer.init() 
+        pygame.mixer.init()
 
         self.grid = Grid()
         self.all_blocks = [IBlock(), JBlock(), LBlock(), OBlock(), SBlock(), TBlock(), ZBlock()]
@@ -30,41 +27,51 @@ class Game:
         self.hard_drop_points = 0
         self.combo_counter = -1
 
-        # --- التعديل هنا: استخدام os.path.join لتحميل ملفات الصوت ---
         try:
             self.rotate_sound = pygame.mixer.Sound(os.path.join(game_assets_base_path, "Sounds", "rotate.ogg"))
             self.clear_sound = pygame.mixer.Sound(os.path.join(game_assets_base_path, "Sounds", "clear.ogg"))
-            pygame.mixer.music.load(os.path.join(game_assets_base_path, "Sounds", "music.ogg")) 
+            pygame.mixer.music.load(os.path.join(game_assets_base_path, "Sounds", "music.ogg"))
             pygame.mixer.music.play(-1)
         except pygame.error as e:
             print(f"Warning: Could not load sound files - {e}")
             self.rotate_sound = None
             self.clear_sound = None
 
-        self.highscore_file = os.path.join(game_assets_base_path, "highscores.json") # <--- تعديل: تحديد مسار ملف النقاط
+        self.highscore_file = os.path.join(game_assets_base_path, "highscores.json")
         self.highscores = self.load_highscores()
 
         self.held_block = None
         self.can_hold = True
 
     def update_score(self, lines_cleared, move_down_points):
+        # النقاط الأساسية لكل سطر
         if lines_cleared == 1:
-            self.score += 150 * self.level
+            self.score += 100 * self.level  # كانت 150
         elif lines_cleared == 2:
-            self.score += 400 * self.level
+            self.score += 300 * self.level  # كانت 400
         elif lines_cleared == 3:
-            self.score += 700 * self.level
+            self.score += 500 * self.level  # كانت 700
         elif lines_cleared == 4:
-            self.score += 1200 * self.level
+            self.score += 800 * self.level  # كانت 1200
+        
+        # نقاط السقوط اليدوي
         self.score += move_down_points
-
+        
+        # نقاط الكومبو
         if lines_cleared > 0 and self.combo_counter > 0:
             combo_bonus = self.combo_counter * 50 * self.level
             self.score += combo_bonus
         
+        # نقاط الهارد دروب
+        self.score += self.hard_drop_points # إضافة نقاط الهارد دروب هنا
+        self.hard_drop_points = 0 # إعادة تعيين نقاط الهارد دروب بعد إضافتها
+
         self.lines_cleared_total += lines_cleared
         if self.lines_cleared_total >= self.level * 10:
             self.level += 1
+            # سرعة السقوط بتتحدث في main.py بناءً على level
+
+        print(f"Current Score: {self.score}, Level: {self.level}") # طباعة السكور للتاكد
 
     def get_next_block_from_bag(self):
         if len(self.blocks_bag) == 0:
@@ -76,33 +83,33 @@ class Game:
 
     def move_left(self):
         self.current_block.move(0, -1)
-        if self.block_inside() == False or self.block_fits() == False:
+        if self.block_inside() == False or self.block_fits_on_grid() == False: # تم تعديل block_fits() لـ block_fits_on_grid()
             self.current_block.move(0, 1)
 
     def move_right(self):
         self.current_block.move(0, 1)
-        if self.block_inside() == False or self.block_fits() == False:
+        if self.block_inside() == False or self.block_fits_on_grid() == False: # تم تعديل block_fits() لـ block_fits_on_grid()
             self.current_block.move(0, -1)
 
     def move_down(self):
         self.current_block.move(1, 0)
-        if self.block_inside() == False or self.block_fits() == False:
+        if self.block_inside() == False or self.block_fits_on_grid() == False: # تم تعديل block_fits() لـ block_fits_on_grid()
             self.current_block.move(-1, 0)
             self.lock_block()
 
     def hard_drop(self):
-        initial_row = self.current_block.row_offset
-        ghost_tiles = self.current_block.get_ghost_cell_positions(self.grid)
-        
-        if ghost_tiles:
-            target_row_offset = ghost_tiles[0].row - self.current_block.cells[self.current_block.rotation_state][0].row
-            rows_to_move = target_row_offset - initial_row
-            self.current_block.move(rows_to_move, 0)
-            self.hard_drop_points = rows_to_move * 2
-        else:
-            self.hard_drop_points = 0
-
+        # حساب النقاط قبل القفل عشان تكون دقيقة
+        current_row = self.current_block.row_offset
+        rows_dropped = 0
+        while True:
+            self.current_block.move(1, 0)
+            if not self.block_inside() or not self.block_fits_on_grid(): # تم تعديل block_fits() لـ block_fits_on_grid()
+                self.current_block.move(-1, 0) # ارجع خطوة للخلف
+                break
+            rows_dropped += 1
+        self.hard_drop_points = rows_dropped * 2 # نقطتين لكل صف سقط
         self.lock_block()
+
 
     def lock_block(self):
         tiles = self.current_block.get_cell_positions()
@@ -116,12 +123,12 @@ class Game:
         if rows_cleared > 0:
             if self.clear_sound:
                 pygame.mixer.Sound.play(self.clear_sound) 
-            self.update_score(rows_cleared, 0)
+            self.update_score(rows_cleared, 0) # هنا بنمرر عدد الصفوف الممسوحة
             self.combo_counter += 1
         else:
             self.combo_counter = -1
 
-        if self.block_fits() == False:
+        if self.block_fits_on_grid() == False: # تم تعديل block_fits() لـ block_fits_on_grid()
             self.game_over = True
             self.update_highscores()
         
@@ -140,17 +147,18 @@ class Game:
         self.combo_counter = -1
         self.held_block = None
         self.can_hold = True
-        
+        self.hard_drop_points = 0 # reset hard drop points
+
         if pygame.mixer.music.get_busy():
             pygame.mixer.music.stop()
         try:
-            # --- التعديل هنا: استخدام os.path.join لإعادة تشغيل الموسيقى ---
             pygame.mixer.music.load(os.path.join(game_assets_base_path, "Sounds", "music.ogg"))
             pygame.mixer.music.play(-1)
         except pygame.error as e:
             print(f"Warning: Could not restart music - {e}")
 
-    def block_fits(self):
+    # تم تغيير اسم الدالة لتجنب الالتباس مع block.py's block_fits
+    def block_fits_on_grid(self):
         tiles = self.current_block.get_cell_positions()
         for tile in tiles:
             if self.grid.is_empty(tile.row, tile.column) == False:
@@ -159,7 +167,7 @@ class Game:
 
     def rotate(self):
         self.current_block.rotate()
-        if self.block_inside() == False or self.block_fits() == False:
+        if self.block_inside() == False or self.block_fits_on_grid() == False: # تم تعديل block_fits() لـ block_fits_on_grid()
             self.current_block.undo_rotation()
         else:
             if self.rotate_sound:
@@ -206,7 +214,7 @@ class Game:
                 self.held_block = temp
             
             self.current_block.reset_position() 
-            if not self.block_fits():
+            if not self.block_fits_on_grid(): # تم تعديل block_fits() لـ block_fits_on_grid()
                  self.game_over = True
             
             self.can_hold = False
@@ -217,12 +225,14 @@ class Game:
         if not self.game_over:
             ghost_tiles = self.current_block.get_ghost_cell_positions(self.grid)
             for tile in ghost_tiles:
-                ghost_rect = pygame.Rect(tile.column * self.current_block.cell_size + 11,
-                                         tile.row * self.current_block.cell_size + 11,
+                ghost_rect = pygame.Rect(tile.column * self.current_block.cell_size + self.grid.offset_x + 1, # استخدام offset_x هنا
+                                         tile.row * self.current_block.cell_size + self.grid.offset_y + 1, # استخدام offset_y هنا
                                          self.current_block.cell_size - 1, self.current_block.cell_size - 1)
                 pygame.draw.rect(screen, Colors.helwan_grey_light, ghost_rect, 1)
 
-        self.current_block.draw(screen, 11, 11)
+        # تم تعديلOffsets هنا لاستخدام offsets الشاشة بالكامل وليس فقط للوحة
+        self.current_block.draw(screen, self.grid.offset_x, self.grid.offset_y) # تمرير offsets الشاشة
+
 
         next_block_offset_x = 320
         next_block_offset_y = 215
