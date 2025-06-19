@@ -43,7 +43,7 @@ class IBlock(Block):
         self.reset_position()
 
     def reset_position(self):
-        self.row_offset = 0  # بدل -1، نبدأ من الصف 0 عشان مايبقاش برة الشبكة
+        self.row_offset = 0
         self.column_offset = 3
 
 class OBlock(Block):
