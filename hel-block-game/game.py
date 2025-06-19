@@ -27,7 +27,6 @@ class Game:
         clear_sound_path = os.path.join(base_path, "Sounds", "clear.ogg")
         music_path = os.path.join(base_path, "Sounds", "music.ogg")
 
-        # استخدم مجلد المستخدم لتخزين ملف السكور لتجنب مشاكل الصلاحيات
         highscore_path = os.path.join(os.path.expanduser("~"), ".helwan_highscores.json")
 
         self.rotate_sound = pygame.mixer.Sound(rotate_sound_path)
@@ -109,6 +108,7 @@ class Game:
         if rows_cleared > 0:
             self.update_score(rows_cleared, 0)
             self.combo_counter += 1
+            self.clear_sound.play()
         else:
             self.combo_counter = -1
 
@@ -132,6 +132,7 @@ class Game:
         self.combo_counter = -1
         self.held_block = None
         self.can_hold = True
+        self.game_over = False
 
     def block_fits(self):
         tiles = self.current_block.get_cell_positions()
@@ -144,6 +145,8 @@ class Game:
         self.current_block.rotate()
         if not self.block_inside() or not self.block_fits():
             self.current_block.undo_rotation()
+        else:
+            self.rotate_sound.play()
 
     def block_inside(self):
         tiles = self.current_block.get_cell_positions()
