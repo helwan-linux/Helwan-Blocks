@@ -43,7 +43,7 @@ class IBlock(Block):
         self.reset_position()
 
     def reset_position(self):
-        self.row_offset = -1  # عشان البلوك طويل، يبدأ أعلى شوية
+        self.row_offset = 0  # بدل -1، نبدأ من الصف 0 عشان مايبقاش برة الشبكة
         self.column_offset = 3
 
 class OBlock(Block):
@@ -56,7 +56,7 @@ class OBlock(Block):
 
     def reset_position(self):
         self.row_offset = 0
-        self.column_offset = 4  # متحرك شوية لليمين لأنه مربع
+        self.column_offset = 4
 
 class SBlock(Block):
     def __init__(self):
