@@ -57,6 +57,9 @@ class Grid:
 
         self.clearing_rows.sort(reverse=True)
 
+        # حفظ نسخة من الصفوف قبل التحريك
+        original_grid = [row.copy() for row in self.grid]
+
         for row in self.clearing_rows:
             self.clear_row(row)
 
