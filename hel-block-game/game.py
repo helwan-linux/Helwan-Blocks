@@ -66,6 +66,9 @@ class Game:
             random.shuffle(self.blocks_bag)
         block = self.blocks_bag.pop(0)
         block.reset_position()
+        # ضمان بداية القطعة في منتصف اللوح
+        block.row_offset = 0
+        block.column_offset = (self.grid.num_cols // 2) - 2
         return block
 
     def move_left(self):
@@ -134,10 +137,14 @@ class Game:
         self.can_hold = True
         self.game_over = False
 
+    # ===== التعديل الأساسي =====
     def block_fits(self):
         tiles = self.current_block.get_cell_positions()
         for tile in tiles:
-            if not self.grid.is_empty(tile.row, tile.column):
+            if not self.grid.is_inside(tile.row, tile.column):
+                return False
+            # خلية مش فارغة، وليست جزء من current_block نفسه
+            if self.grid.grid[tile.row][tile.column] != 0 and self.grid.grid[tile.row][tile.column] != self.current_block.id:
                 return False
         return True
 
@@ -188,6 +195,10 @@ class Game:
                 self.held_block = temp
 
             self.current_block.reset_position()
+            # التأكد من بداية القطعة داخل اللوح بعد hold
+            self.current_block.row_offset = 0
+            self.current_block.column_offset = (self.grid.num_cols // 2) - 2
+
             if not self.block_fits():
                 self.game_over = True
             self.can_hold = False
